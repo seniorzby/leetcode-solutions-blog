@@ -234,3 +234,269 @@ int binarySearchRightBound(int[] nums, int target) {
    - 循环结束后的处理：根据题目要求可能需要额外检查
 
 二分查找的关键在于理解"搜索空间"的概念，以及如何通过比较缩小这个空间。不同的二分查找变体（如寻找左边界、右边界）本质上是在维护不同的循环不变量。
+
+# 二分查找算法变体详解：LeetCode 33、34、35、704、153题分析
+
+二分查找是一种高效的搜索算法，时间复杂度为 O(log n)。然而，在不同类型的问题中，二分查找的具体实现细节会有所不同。本文将通过分析 LeetCode 上的几道经典二分查找题目，解释这些差异的本质原因，并提供如何根据具体问题选择正确二分查找变体的思路。
+
+## 二分查找的核心要素
+
+在分析不同变体前，我们需要明确二分查找的三个核心要素：
+
+1. **循环终止条件**：`while (left <= right)` 还是 `while (left < right)`
+2. **边界更新方式**：`left = mid + 1`/`right = mid - 1` 还是 `left = mid`/`right = mid`
+3. **返回值处理**：循环结束时应返回什么
+
+这些细节的选择取决于具体问题的性质。
+
+## 经典二分查找问题分析
+
+### LeetCode 704: 二分查找
+
+这是最基础的二分查找问题，查找目标值在有序数组中的位置。
+
+```java
+public int search(int[] nums, int target) {
+    int left = 0;
+    int right = nums.length - 1;
+    
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        
+        if (nums[mid] == target) {
+            return mid;
+        } else if (nums[mid] < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    return -1;
+}
+```
+
+**关键特点**：
+- 使用 `while (left <= right)`，因为我们需要检查 `left == right` 的情况
+- 当 `nums[mid] < target` 时，可以确定中间值不是目标，使用 `left = mid + 1`
+- 当 `nums[mid] > target` 时，可以确定中间值不是目标，使用 `right = mid - 1`
+- 如果找不到目标值，返回 -1
+
+### LeetCode 153: 寻找旋转排序数组中的最小值
+
+```java
+public int findMin(int[] nums) {
+    int left = 0;
+    int right = nums.length - 1;
+    
+    while (left < right) {
+        int mid = left + (right - left) / 2;
+        
+        if (nums[mid] > nums[right]) {
+            left = mid + 1;
+        } else {
+            right = mid;
+        }
+    }
+    
+    return nums[left];
+}
+```
+
+**关键特点**：
+- 使用 `while (left < right)`，因为我们知道最小值一定存在
+- 当 `nums[mid] > nums[right]` 时，最小值在右半部分，且不可能是 mid，使用 `left = mid + 1`
+- 当 `nums[mid] <= nums[right]` 时，最小值在左半部分（可能是 mid 本身），使用 `right = mid`
+- 循环结束时，`left == right`，指向最小值
+
+### LeetCode 33: 搜索旋转排序数组
+
+```java
+public int search(int[] nums, int target) {
+    int left = 0;
+    int right = nums.length - 1;
+    
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        
+        if (nums[mid] == target) {
+            return mid;
+        }
+        
+        if (nums[left] <= nums[mid]) {  // 左半部分有序
+            if (target >= nums[left] && target < nums[mid]) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        } else {  // 右半部分有序
+            if (target > nums[mid] && target <= nums[right]) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+    }
+    
+    return -1;
+}
+```
+
+**关键特点**：
+- 使用 `while (left <= right)`，因为我们要找具体值
+- 首先判断 mid 在哪个有序部分，然后根据 target 是否在有序部分内决定搜索区间
+- 边界更新与标准二分查找相同，因为我们可以确定 mid 不是目标（除非 `nums[mid] == target`）
+
+### LeetCode 34: 在排序数组中查找元素的第一个和最后一个位置
+
+这道题可以分解为两次二分查找：找第一个等于目标值的位置，和找第一个大于目标值的位置减一。
+
+```java
+public int[] searchRange(int[] nums, int target) {
+    int[] result = {-1, -1};
+    
+    // 找第一个等于target的位置
+    int left = 0;
+    int right = nums.length - 1;
+    
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        
+        if (nums[mid] >= target) {
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    
+    // 检查是否找到了target
+    if (left < nums.length && nums[left] == target) {
+        result[0] = left;
+        
+        // 找最后一个等于target的位置
+        right = nums.length - 1;
+        
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            
+            if (nums[mid] > target) {
+                right = mid - 1;
+            } else {
+                left = mid + 1;
+            }
+        }
+        
+        result[1] = right;
+    }
+    
+    return result;
+}
+```
+
+**关键特点**：
+- 两次二分查找使用略有不同的条件
+- 第一次查找中，当 `nums[mid] == target` 时，继续向左搜索，确保找到第一个位置
+- 第二次查找中，当 `nums[mid] == target` 时，继续向右搜索，确保找到最后一个位置
+
+### LeetCode 35: 搜索插入位置
+
+```java
+public int searchInsert(int[] nums, int target) {
+    int left = 0;
+    int right = nums.length - 1;
+    
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        
+        if (nums[mid] == target) {
+            return mid;
+        } else if (nums[mid] < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    
+    return left;
+}
+```
+
+**关键特点**：
+- 使用 `while (left <= right)`，与标准二分查找相同
+- 如果找不到目标值，返回 `left`，这正好是插入位置
+- 循环结束时，`left` 是第一个大于等于目标值的位置
+
+## 如何选择正确的二分查找变体
+
+选择正确的二分查找变体本质上取决于三个关键问题：
+
+### 1. 我在寻找什么？
+
+- **具体值**（704、33题）：使用 `while (left <= right)`
+- **特殊位置**（153题）：使用 `while (left < right)`
+- **第一个/最后一个满足条件的位置**（34题）：通常需要特殊处理边界
+
+### 2. 比较后，我能100%排除哪部分？
+
+这决定了如何更新左右边界：
+
+- 如果中间值**肯定不是答案**：使用 `left = mid + 1` 或 `right = mid - 1`
+- 如果中间值**可能是答案**：使用 `left = mid` 或 `right = mid`
+
+例如：
+- 在153题中，当 `nums[mid] > nums[right]` 时，mid 肯定不是最小值，可以用 `left = mid + 1`
+- 当 `nums[mid] <= nums[right]` 时，mid 可能是最小值，必须用 `right = mid`
+
+### 3. 循环结束时，指针指向什么？
+
+这决定了如何处理返回值：
+
+- 在标准二分查找中，如果未找到目标，返回 `-1`
+- 在153题中，循环结束时 `left == right`，指向最小值
+- 在35题中，循环结束时 `left` 指向插入位置
+
+## 常见二分查找变体模板
+
+### 寻找具体值
+
+```java
+while (left <= right) {
+    mid = left + (right - left) / 2;
+    if (nums[mid] == target) return mid;
+    else if (nums[mid] < target) left = mid + 1;
+    else right = mid - 1;
+}
+return -1;  // 未找到
+```
+
+### 寻找第一个满足条件的位置
+
+```java
+while (left < right) {
+    mid = left + (right - left) / 2;
+    if (条件成立) right = mid;
+    else left = mid + 1;
+}
+return left;  // 可能需要额外检查
+```
+
+### 寻找最后一个满足条件的位置
+
+```java
+while (left < right) {
+    mid = left + (right - left + 1) / 2;  // 上取整
+    if (条件成立) left = mid;
+    else right = mid - 1;
+}
+return left;  // 可能需要额外检查
+```
+
+## 总结
+
+二分查找虽然概念简单，但细节变化多样。要选择正确的二分查找变体，关键在于明确：
+
+1. 你要找的具体是什么
+2. 比较后，哪部分可以安全排除
+3. 循环结束时，指针应该在什么位置
+
+掌握这三点，你就能灵活应对各种二分查找问题，根据具体题目特点选择正确的算法变体。这也是为什么不同题目中二分查找的细节会有所不同的本质原因。
