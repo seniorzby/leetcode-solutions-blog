@@ -2,19 +2,21 @@
 
 欢迎来到我的力扣刷题笔记！这里记录了我刷题的思路、解法和心得体会，方便复习和分享。
 
-## 算法分类
+## 已完成的分类
 
-- [二分查找](./categories/binary-search.md)
-  - 基础二分查找
-  - 变种二分查找
+- [二分查找](./binary-search.md)
+  - LeetCode 704: 二分查找
+  - LeetCode 33: 搜索旋转排序数组
+  - LeetCode 34: 在排序数组中查找元素的第一个和最后一个位置
+  - LeetCode 35: 搜索插入位置
 
 ## 最近更新
 
-- 2025-03-07: 添加二分查找分类，完成 [LeetCode 704: 二分查找](./algorithms/binary-search/704-binary-search.md)
-- 2025-03-07: 添加 [LeetCode 33: 搜索旋转排序数组](./algorithms/binary-search/33-search-in-rotated-sorted-array.md)
+- 2025-03-07: 添加二分查找分类和相关题目
 
-## 学习计划
+## 学习进度
 
-- [ ] 完成二分查找专题 (进行中)
-- [ ] 学习动态规划
-- [ ] 学习图论算法
+- [x] 二分查找
+- [ ] 动态规划
+- [ ] 回溯算法
+- [ ] 贪心算法
