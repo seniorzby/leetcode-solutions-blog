@@ -500,3 +500,216 @@ return left;  // 可能需要额外检查
 3. 循环结束时，指针应该在什么位置
 
 掌握这三点，你就能灵活应对各种二分查找问题，根据具体题目特点选择正确的算法变体。这也是为什么不同题目中二分查找的细节会有所不同的本质原因。
+
+# LeetCode 74和162题解析与总结
+
+## LeetCode 74: 搜索二维矩阵
+
+### 题目描述
+编写一个高效的算法来判断 m x n 矩阵中，是否存在一个目标值。该矩阵具有以下特性：
+- 每行中的整数从左到右按升序排列
+- 每行的第一个整数大于前一行的最后一个整数
+
+### 解题思路
+由于矩阵的特性，将整个矩阵按行展开后可以得到一个有序数组。我们可以利用二分查找在这个有序数组上进行搜索，但不需要实际创建这个数组，只需通过索引转换即可。
+
+### 代码实现（方法一：一维二分查找）
+
+```java
+class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        // 边界检查：检查矩阵是否为null或空
+        if (matrix == null || matrix.length == 0 || matrix[0].length == 0) {
+            return false;
+        }
+        
+        int m = matrix.length;    // 矩阵行数
+        int n = matrix[0].length; // 矩阵列数
+        
+        // 在[0, m*n-1]范围内进行二分查找
+        int left = 0;             // 起始位置
+        int right = m * n - 1;    // 结束位置
+        
+        while (left <= right) {
+            int mid = left + (right - left) / 2;  // 计算中间位置，防止整数溢出
+            
+            // 将一维索引转换为二维矩阵坐标
+            int row = mid / n;    // 计算行索引
+            int col = mid % n;    // 计算列索引
+            
+            // 比较中间元素与目标值
+            if (matrix[row][col] == target) {
+                return true;       // 找到目标值
+            } else if (matrix[row][col] < target) {
+                left = mid + 1;    // 目标在右半部分
+            } else {
+                right = mid - 1;   // 目标在左半部分
+            }
+        }
+        
+        return false;  // 循环结束仍未找到目标值
+    }
+}
+```
+
+### 代码实现（方法二：两次二分查找）
+
+```java
+class Solution {
+    public boolean searchMatrix(int[][] matrix, int target) {
+        // 边界检查
+        if (matrix == null || matrix.length == 0 || matrix[0].length == 0) {
+            return false;
+        }
+        
+        int rows = matrix.length;
+        int cols = matrix[0].length;
+        
+        // 第一次二分：找到可能包含目标值的行
+        int topRow = 0;
+        int bottomRow = rows - 1;
+        
+        while (topRow <= bottomRow) {
+            int midRow = topRow + (bottomRow - topRow) / 2;
+            
+            // 检查该行的第一个和最后一个元素
+            if (matrix[midRow][0] <= target && target <= matrix[midRow][cols-1]) {
+                // 目标值可能在这一行，在这一行中进行二分查找
+                return binarySearchRow(matrix[midRow], target);
+            }
+            else if (matrix[midRow][0] > target) {
+                // 目标值可能在上面的行
+                bottomRow = midRow - 1;
+            }
+            else {
+                // 目标值可能在下面的行
+                topRow = midRow + 1;
+            }
+        }
+        
+        return false;
+    }
+    
+    // 在一行中进行标准的二分查找
+    private boolean binarySearchRow(int[] row, int target) {
+        int left = 0;
+        int right = row.length - 1;
+        
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (row[mid] == target) {
+                return true;
+            }
+            else if (row[mid] < target) {
+                left = mid + 1;
+            }
+            else {
+                right = mid - 1;
+            }
+        }
+        
+        return false;
+    }
+}
+```
+
+### 复杂度分析
+- **时间复杂度**：O(log(m*n))，其中m是行数，n是列数
+- **空间复杂度**：O(1)，只使用了常数额外空间
+
+### 理解重点
+1. **一维二分查找方法**中的关键在于一维索引和二维坐标的转换：
+   - 一维索引 k 转二维坐标: row = k / n, col = k % n
+   - 这种转换使我们可以在逻辑上将矩阵视为一维数组，同时实际访问时仍使用二维坐标
+
+2. **两次二分查找方法**先确定目标可能所在的行，再在该行内查找：
+   - 利用每行的第一个元素和最后一个元素判断目标值是否可能在该行
+   - 思维上更符合二维矩阵的结构，可能更容易理解
+
+## LeetCode 162: 寻找峰值
+
+### 题目描述
+峰值元素是指其值严格大于左右相邻值的元素。给你一个整数数组 nums，找到峰值元素并返回其索引。数组可能包含多个峰值，在这种情况下，返回任何一个峰值所在位置即可。
+
+你可以假设 nums[-1] = nums[n] = -∞ 。
+
+你必须实现时间复杂度为 O(log n) 的算法来解决此问题。
+
+### 解题思路
+虽然数组不是有序的，但我们可以利用二分查找来解决这个问题。关键思路是：
+- 如果 nums[mid] < nums[mid+1]，说明右侧存在峰值
+- 如果 nums[mid] > nums[mid+1]，说明左侧存在峰值
+
+### 代码实现
+
+```java
+class Solution {
+    public int findPeakElement(int[] nums) {
+        // 处理边界情况
+        if (nums == null || nums.length == 0) {
+            return -1;  // 空数组，返回-1
+        }
+        if (nums.length == 1) {
+            return 0;   // 只有一个元素，它就是峰值
+        }
+        
+        int left = 0;
+        int right = nums.length - 1;
+        
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            
+            if (nums[mid] < nums[mid + 1]) {
+                // 右半部分一定有峰值，因为峰值可能是当前上升趋势的最高点
+                left = mid + 1;
+            } else {
+                // 左半部分一定有峰值，因为当前位置可能就是峰值
+                // 或者左侧有峰值
+                right = mid;
+            }
+        }
+        
+        // 当 left == right 时，找到了一个峰值
+        return left;
+    }
+}
+```
+
+### 复杂度分析
+- **时间复杂度**：O(log n)，使用二分查找
+- **空间复杂度**：O(1)，只使用了常数额外空间
+
+### 理解重点
+1. 这个二分查找与常规的在有序数组中查找特定值不同，我们是在寻找满足特定条件（局部最大值）的位置
+
+2. 关键思路是利用了题目给出的边界条件（nums[-1] = nums[n] = -∞）以及数组中必定存在峰值的特性
+
+3. 当 nums[mid] < nums[mid+1] 时，峰值一定在右侧，因为：
+   - 即使 nums 数组后面所有元素都在增加，最后一个元素也会因为 nums[n] = -∞ 的条件成为峰值
+   - 如果数组在增加后开始下降，那么转折点就是峰值
+
+4. 当 nums[mid] > nums[mid+1] 时，峰值一定在左侧（包括 mid 点），因为：
+   - mid 可能就是峰值（如果 nums[mid-1] < nums[mid]）
+   - 即使 mid 左侧所有元素都在下降，第一个元素也会因为 nums[-1] = -∞ 的条件成为峰值
+   - 如果数组在下降后开始上升，那么转折点就是峰值
+
+## 二分查找技巧总结
+
+1. **防止整数溢出**：使用 `mid = left + (right - left) / 2` 而不是 `mid = (left + right) / 2`
+
+2. **循环条件**：
+   - 使用 `left <= right` 当你需要查找特定值
+   - 使用 `left < right` 当你需要找到满足特定条件的边界
+
+3. **索引更新**：
+   - 对于常规二分查找：`left = mid + 1` 和 `right = mid - 1`
+   - 对于边界查找（如峰值问题）：可能需要 `right = mid` 而不是 `right = mid - 1`
+
+4. **二维转一维**：使用 `row = index / cols` 和 `col = index % cols` 进行转换
+
+5. **适用场景**：
+   - 标准有序数组查找
+   - 旋转有序数组查找
+   - 矩阵二分查找
+   - 查找满足特定条件的位置（如峰值问题）
+   - 二分答案（猜测答案并验证）
